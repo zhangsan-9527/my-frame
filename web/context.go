@@ -13,6 +13,24 @@ import (
 //	jsonDisallowUnknownFields = true
 //)
 
+// Render 这种实现方案优点:
+// 代码非常清晰简单
+// 保持住了 RespData 的语义, 这意味着其他中间件可以篡改这个页面, 例如直接替换为错误页面等
+func (c *Context) Render(tplName string, data any) error {
+	// 不要这样做
+	// tplName = tplName + ".gohtml"
+	// tplName = tplName + c.tplPrefix
+	var err error
+	c.RespData, err = c.tplEngine.Render(c.Req.Context(), tplName, data)
+	if err != nil {
+		c.RespStatusCode = http.StatusInternalServerError
+		return err
+	}
+	c.RespStatusCode = http.StatusOK
+	return nil
+
+}
+
 type Context struct {
 	Req *http.Request
 
@@ -35,6 +53,8 @@ type Context struct {
 	queryValues url.Values
 
 	MatchedRoute string
+
+	tplEngine TemplateEngine
 
 	// cookieSameSite http.SameSite
 }

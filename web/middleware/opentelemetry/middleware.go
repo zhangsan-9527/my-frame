@@ -1,11 +1,11 @@
 package opentelemetry
 
 import (
-	"frame/web"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/trace"
+	"my-frame/web"
 )
 
 const instrumentationName = "frame/web/middleware/opentelementry"

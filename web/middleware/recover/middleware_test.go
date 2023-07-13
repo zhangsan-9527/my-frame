@@ -2,7 +2,7 @@ package recover
 
 import (
 	"fmt"
-	"frame/web"
+	"my-frame/web"
 	"testing"
 )
 

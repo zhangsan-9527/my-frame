@@ -21,7 +21,7 @@ type Server interface {
 	http.Handler
 	Start(addr string) error
 
-	// addRoute 路由注册功能
+	// addRoute 增加路由注册功能
 	// method 是 HTTP 方法
 	// path 是 路由
 	// handleFunc 是 业务逻辑
@@ -45,6 +45,8 @@ type HTTPServer struct {
 	mdls []Middleware
 
 	log func(msg string, args ...any)
+
+	tplEngine TemplateEngine
 
 	//Middleware []Middleware
 
@@ -76,6 +78,12 @@ func NewHTTPServer(opts ...HTTPServerOption) *HTTPServer {
 	return res
 }
 
+func ServerWithTemplateEngine(tpl TemplateEngine) HTTPServerOption {
+	return func(server *HTTPServer) {
+		server.tplEngine = tpl
+	}
+}
+
 func ServerWithMiddleware(mdls ...Middleware) HTTPServerOption {
 	return func(server *HTTPServer) {
 		server.mdls = mdls
@@ -90,8 +98,9 @@ func ServerWithMiddleware(mdls ...Middleware) HTTPServerOption {
 func (h *HTTPServer) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	// 你的框架代码就在这里
 	ctx := &Context{
-		Req:  request,
-		Resp: writer,
+		Req:       request,
+		Resp:      writer,
+		tplEngine: h.tplEngine,
 	}
 
 	// 接下来就是查找路由，并且执行命中的业务逻辑

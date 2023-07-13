@@ -1,6 +1,6 @@
 package errhdl
 
-import "frame/web"
+import "my-frame/web"
 
 type MiddlewareBuilder struct {
 	// 这种设计只能返回固定的值

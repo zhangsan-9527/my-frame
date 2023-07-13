@@ -52,7 +52,7 @@ func (r *router) addRoute(method string, path string, handleFunc HandleFunc) {
 
 	// path结尾校验
 	if path != "/" && path[len(path)-1] == '/' {
-		panic("web: 路径必须以 / 结尾")
+		panic("web: 路径不能以 / 结尾")
 	}
 
 	// 中间连续 //, 可以用 strings.contanins("//")
@@ -96,6 +96,42 @@ func (r *router) addRoute(method string, path string, handleFunc HandleFunc) {
 	root.handler = handleFunc
 	root.route = path
 
+}
+
+func (n *node) childOfCreate(seg string) *node {
+
+	if seg[0] == ':' {
+		if n.starChild != nil {
+			panic("web: 不允许同时注册路径参数和通配符匹配, 已有通配符匹配")
+		}
+		n.paramChild = &node{
+			path: seg,
+		}
+		return n.paramChild
+	}
+
+	if seg == "*" {
+		if n.paramChild != nil {
+			panic("web: 不允许同时注册路径参数和通配符匹配, 已有路径参数")
+		}
+		n.starChild = &node{
+			path: seg,
+		}
+		return n.starChild
+	}
+
+	if n.chlidren == nil {
+		n.chlidren = map[string]*node{}
+	}
+	res, ok := n.chlidren[seg]
+	if !ok {
+		// 要新建一个
+		res = &node{
+			path: seg,
+		}
+		n.chlidren[seg] = res
+	}
+	return res
 }
 
 func (r *router) findRoute(method string, path string) (*matchInfo, bool) {
@@ -145,42 +181,6 @@ func (r *router) findRoute(method string, path string) (*matchInfo, bool) {
 	// 代表我确实有这个节点, 并且判断是否有handler
 	//return root, root.handler != nil
 
-}
-
-func (n *node) childOfCreate(seg string) *node {
-
-	if seg[0] == ':' {
-		if n.starChild != nil {
-			panic("web: 不允许同时注册路径参数和通配符匹配, 已有通配符匹配")
-		}
-		n.paramChild = &node{
-			path: seg,
-		}
-		return n.paramChild
-	}
-
-	if seg == "*" {
-		if n.paramChild != nil {
-			panic("web: 不允许同时注册路径参数和通配符匹配, 已有路径参数")
-		}
-		n.starChild = &node{
-			path: seg,
-		}
-		return n.starChild
-	}
-
-	if n.chlidren == nil {
-		n.chlidren = map[string]*node{}
-	}
-	res, ok := n.chlidren[seg]
-	if !ok {
-		// 要新建一个
-		res = &node{
-			path: seg,
-		}
-		n.chlidren[seg] = res
-	}
-	return res
 }
 
 // 优先考虑静态匹配, 匹配不上, 再考虑通配符匹配

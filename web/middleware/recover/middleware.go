@@ -1,6 +1,6 @@
 package recover
 
-import "frame/web"
+import "my-frame/web"
 
 type MiddlewareBuilder struct {
 	StatusCode int

@@ -2,7 +2,7 @@ package accesslog
 
 import (
 	"encoding/json"
-	"frame/web"
+	"my-frame/web"
 )
 
 type MiddlewareBuilder struct {
