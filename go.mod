@@ -3,6 +3,7 @@ module my-frame
 go 1.20
 
 require (
+	github.com/hashicorp/golang-lru/v2 v2.0.4
 	github.com/prometheus/client_golang v1.16.0
 	github.com/stretchr/testify v1.8.4
 	go.opentelemetry.io/otel v1.16.0
