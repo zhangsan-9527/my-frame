@@ -5,6 +5,11 @@ import (
 	"net/http"
 )
 
+var (
+// ErrkeyNotFound sentinel error, 预定义错误
+// ErrkeyNotFound = errors.New("")
+)
+
 // Store 管理 Session 本身
 type Store interface {
 	// Generate 生成
