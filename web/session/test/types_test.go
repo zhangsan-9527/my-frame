@@ -1,19 +1,27 @@
-package session
+package test
 
 import (
 	"my-frame/web"
+	"my-frame/web/session"
+	"my-frame/web/session/cookie"
+	"my-frame/web/session/memory"
 	"net/http"
 	"testing"
+	"time"
 )
 
 func TestSession(t *testing.T) {
 	// 非常简单的登录校验
-	var m *Manage
+	var m *session.Manage = &session.Manage{
+		Propagator: cookie.NewPropagator(),
+		Store:      memory.NewStore(time.Minute * 15),
+		CtxSessKey: "sessKey",
+	}
 
 	server := web.NewHTTPServer(web.ServerWithMiddleware(
 		func(next web.HandleFunc) web.HandleFunc {
 			return func(ctx *web.Context) {
-				if ctx.Req.URL.Path == "login" {
+				if ctx.Req.URL.Path == "/login" {
 					// 放过去, 有用户准备登陆
 					next(ctx)
 					return
@@ -76,7 +84,11 @@ func TestSession(t *testing.T) {
 		}
 
 		// 假如说我要把昵称从 session 里面拿出来
-		sess.Get(ctx.Req.Context(), "nickname")
+		val, err := sess.Get(ctx.Req.Context(), "nickname")
+		if err != nil {
+			return
+		}
+		ctx.RespData = []byte(val.(string))
 	})
 
 	server.Start(":8081")
