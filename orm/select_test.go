@@ -10,10 +10,8 @@ import (
 func TestSelector_Build(t *testing.T) {
 
 	testCass := []struct {
-		name string
-
-		bulider QueryBuilder
-
+		name      string
+		bulider   QueryBuilder
 		wantQuery *Query
 		wantErr   error
 	}{

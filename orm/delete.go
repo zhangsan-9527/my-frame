@@ -2,7 +2,7 @@ package orm
 
 import (
 	"context"
-	"reflect"
+	"strings"
 )
 
 // goland重命名 shift + F6
@@ -14,29 +14,35 @@ type Deleter[T any] struct {
 }
 
 func (d *Deleter[T]) Build() (*Query, error) {
-	d.sb.WriteString("DELETE * FROM ")
+	d.sb = &strings.Builder{}
+	var err error
+	d.model, err = parseModel(new(T))
+	if err != nil {
+		return nil, err
+	}
+	sb := d.sb
+	sb.WriteString("DELETE * FROM ")
 	// 我怎么把表名拿到
-	var t T
 	if d.table == "" {
-		d.sb.WriteByte('`')
-		d.sb.WriteString(reflect.TypeOf(t).Name())
-		d.sb.WriteByte('`')
+		sb.WriteByte('`')
+		sb.WriteString(d.model.tableName)
+		sb.WriteByte('`')
 	} else {
 		//segs := strings.Split(s.table, ".")
-		//d.sb.WriteByte('`')
-		//d.sb.WriteString(segs[0])
-		//d.sb.WriteByte('`')
-		//d.sb.WriteByte('`')
-		//d.sb.WriteByte('.')
-		//d.sb.WriteByte('`')
-		//d.sb.WriteByte('`')
-		//d.sb.WriteString(segs[1])
-		//d.sb.WriteByte('`')
-		d.sb.WriteString(d.table)
+		//sb.WriteByte('`')
+		//sb.WriteString(segs[0])
+		//sb.WriteByte('`')
+		//sb.WriteByte('`')
+		//sb.WriteByte('.')
+		//sb.WriteByte('`')
+		//sb.WriteByte('`')
+		//sb.WriteString(segs[1])
+		//sb.WriteByte('`')
+		sb.WriteString(d.table)
 	}
 
 	if len(d.where) > 0 {
-		d.sb.WriteString(" WHERE ")
+		sb.WriteString(" WHERE ")
 		p := d.where[0]
 		for i := 1; i < len(d.where); i++ {
 			p = p.And(d.where[i])

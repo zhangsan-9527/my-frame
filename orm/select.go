@@ -12,7 +12,7 @@ type Selector[T any] struct {
 }
 
 func (s *Selector[T]) Build() (*Query, error) {
-	s.builder.sb = &strings.Builder{}
+	s.sb = &strings.Builder{}
 	var err error
 	s.model, err = parseModel(new(T))
 	if err != nil {
