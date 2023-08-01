@@ -3,6 +3,7 @@ package orm
 import (
 	"database/sql"
 	"github.com/stretchr/testify/assert"
+	"my-frame/orm/internal/errs"
 	"testing"
 )
 
@@ -20,7 +21,7 @@ func TestSelector_Build(t *testing.T) {
 			name:    "no from",
 			bulider: &Selector[TestModel]{},
 			wantQuery: &Query{
-				SQL:  "SELECT * FROM `TestModel`;",
+				SQL:  "SELECT * FROM `test_model`;",
 				Args: nil,
 			},
 		},
@@ -36,7 +37,7 @@ func TestSelector_Build(t *testing.T) {
 			name:    "empty from",
 			bulider: (&Selector[TestModel]{}).From(""),
 			wantQuery: &Query{
-				SQL:  "SELECT * FROM `TestModel`;",
+				SQL:  "SELECT * FROM `test_model`;",
 				Args: nil,
 			},
 		},
@@ -52,7 +53,7 @@ func TestSelector_Build(t *testing.T) {
 			name:    "where",
 			bulider: (&Selector[TestModel]{}).Where(C("Age").Eq(18)),
 			wantQuery: &Query{
-				SQL:  "SELECT * FROM `TestModel` WHERE `Age` = ?;",
+				SQL:  "SELECT * FROM `test_model` WHERE `age` = ?;",
 				Args: []any{18},
 			},
 		},
@@ -60,7 +61,7 @@ func TestSelector_Build(t *testing.T) {
 			name:    "not",
 			bulider: (&Selector[TestModel]{}).Where(Not(C("Age").Eq(18))),
 			wantQuery: &Query{
-				SQL:  "SELECT * FROM `TestModel` WHERE  NOT (`Age` = ?);",
+				SQL:  "SELECT * FROM `test_model` WHERE  NOT (`age` = ?);",
 				Args: []any{18},
 			},
 		},
@@ -68,17 +69,22 @@ func TestSelector_Build(t *testing.T) {
 			name:    "and",
 			bulider: (&Selector[TestModel]{}).Where(C("Age").Eq(18).And(C("Age").Eq(30))),
 			wantQuery: &Query{
-				SQL:  "SELECT * FROM `TestModel` WHERE (`Age` = ?) AND (`Age` = ?);",
+				SQL:  "SELECT * FROM `test_model` WHERE (`age` = ?) AND (`age` = ?);",
 				Args: []any{18, 30},
 			},
 		},
 		{
-			name:    "and",
+			name:    "or",
 			bulider: (&Selector[TestModel]{}).Where(C("Age").Eq(18).Or(C("Age").Eq(30))),
 			wantQuery: &Query{
-				SQL:  "SELECT * FROM `TestModel` WHERE (`Age` = ?) OR (`Age` = ?);",
+				SQL:  "SELECT * FROM `test_model` WHERE (`age` = ?) OR (`age` = ?);",
 				Args: []any{18, 30},
 			},
+		},
+		{
+			name:    "invalid column",
+			bulider: (&Selector[TestModel]{}).Where(C("Age").Eq(18).Or(C("XXXX").Eq(30))),
+			wantErr: errs.NewErrUnkonwField("XXXX"),
 		},
 	}
 

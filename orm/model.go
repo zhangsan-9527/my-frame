@@ -53,3 +53,10 @@ func underscoreName(tableName string) string {
 	}
 	return string(buf)
 }
+
+/*
+
+	元数据:
+		ORM 框架需要解析模型以获得模型的元数据，这些元数据将被用于构建 SQL、执行校验，以及用于处理结果集。
+		模型:一般是指对应到数据库表的 Go结构体定义，也被称为 Schema、Table 等
+*/
