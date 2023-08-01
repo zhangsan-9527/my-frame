@@ -2,20 +2,17 @@ package orm
 
 import (
 	"context"
-	"my-frame/orm/internal/errs"
 	"strings"
 )
 
 type Selector[T any] struct {
 	table string
-	model *model
 	where []Predicate
-	sb    *strings.Builder
-	args  []any
+	builder
 }
 
 func (s *Selector[T]) Build() (*Query, error) {
-	s.sb = &strings.Builder{}
+	s.builder.sb = &strings.Builder{}
 	var err error
 	s.model, err = parseModel(new(T))
 	if err != nil {
@@ -75,94 +72,6 @@ func (s *Selector[T]) From(table string) *Selector[T] {
 //func (s *Selector[T]) Where(query string, args ...any) *Selector[T] {
 //
 //}
-
-func (s *Selector[T]) buildExpression(expr Expression) error {
-	switch exp := expr.(type) {
-	case nil:
-	case Predicate:
-		// 在这里处理 p
-		// p.left 构建好
-		// p.op 构建好
-		// p.right 构建好
-
-		// 判断左边是否是表达式 是就加括号
-		_, ok := exp.left.(Predicate)
-		if ok {
-			s.sb.WriteByte('(')
-		}
-
-		if err := s.buildExpression(exp.left); err != nil {
-			return err
-		}
-
-		if ok {
-			s.sb.WriteByte(')')
-		}
-
-		s.sb.WriteByte(' ')
-		s.sb.WriteString(string(exp.op))
-		s.sb.WriteByte(' ')
-
-		// 判断左边是否是表达式 是就加括号
-		_, ok = exp.right.(Predicate)
-		if ok {
-			s.sb.WriteByte('(')
-		}
-		if err := s.buildExpression(exp.right); err != nil {
-			return err
-		}
-		if ok {
-			s.sb.WriteByte(')')
-		}
-
-	//switch left := p.left.(type) {
-	//case Column:
-	//	sb.WriteByte('`')
-	//	sb.WriteString(left.name)
-	//	sb.WriteByte('`')
-	//	// 剩下不考虑
-	//}
-	//sb.WriteString(string(p.op))
-	//switch right := p.right.(type) {
-	//case value:
-	//	sb.WriteByte('?')
-	//	args = append(args, right.val)
-	//	// 剩下不考虑
-	//}
-
-	case Column:
-
-		fd, ok := s.model.fields[exp.name]
-		// 字段不对, 或者说列不对
-		if !ok {
-			return errs.NewErrUnkonwField(exp.name)
-		}
-		s.sb.WriteByte('`')
-		s.sb.WriteString(fd.colName)
-		s.sb.WriteByte('`')
-		// 剩下不考虑
-
-	case value:
-		s.sb.WriteByte('?')
-		s.addArg(exp.val)
-	// 剩下不考虑
-
-	default:
-		//return fmt.Errorf("orm: 不支持的表达式类型 %v", expr)
-		return errs.NewErrUnsupportedExpression(expr)
-	}
-
-	return nil
-
-}
-
-func (s *Selector[T]) addArg(val any) {
-	if s.args == nil {
-		s.args = make([]any, 0, 4)
-	}
-
-	s.args = append(s.args, val)
-}
 
 func (s *Selector[T]) Where(ps ...Predicate) *Selector[T] {
 	s.where = ps
