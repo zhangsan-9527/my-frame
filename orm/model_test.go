@@ -4,6 +4,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"my-frame/orm/internal/errs"
 	"reflect"
+	"sync"
 	"testing"
 )
 
@@ -114,12 +115,21 @@ func TestRegistry_get(t *testing.T) {
 			}
 			assert.Equal(t, tt.wantModel, m)
 			// 只是检测数量
-			assert.Equal(t, tt.cacheSize, len(r.models))
+			assert.Equal(t, tt.cacheSize, getSyncMapLength(&r.models))
 
 			typ := reflect.TypeOf(tt.entity)
-			m2, ok := r.models[typ]
+			m2, ok := r.models.Load(typ)
 			assert.True(t, ok)
 			assert.Equal(t, tt.wantModel, m2)
 		})
 	}
+}
+
+func getSyncMapLength(m *sync.Map) int {
+	length := 0
+	m.Range(func(_, _ interface{}) bool {
+		length++
+		return true
+	})
+	return length
 }
