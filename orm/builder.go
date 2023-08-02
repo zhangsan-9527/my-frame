@@ -9,6 +9,32 @@ type builder struct {
 	sb    *strings.Builder
 	args  []any
 	model *model
+	db    *DB
+}
+
+//type Predicates []Predicate
+//
+//func (p *Predicates) build(s *strings.Builder) error {
+//	// 写在这里
+//}
+
+//type predicates struct {
+//	// WHERE 或者 HAVING
+//	prefix string
+//	ps     []Predicate
+//}
+//func (p *predicates) build(s *strings.Builder) error {
+//	// 包含拼接WHERE 或者 HAVING部分
+//	// 写在这里
+//}
+
+func (b *builder) buildPredicates(ps []Predicate) error {
+	p := ps[0]
+	for i := 1; i < len(ps); i++ {
+		p = p.And(ps[i])
+	}
+
+	return b.buildExpression(p)
 }
 
 func (b *builder) buildExpression(expr Expression) error {

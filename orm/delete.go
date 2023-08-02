@@ -11,12 +11,13 @@ type Deleter[T any] struct {
 	builder
 	table string
 	where []Predicate
+	r     *registry
 }
 
 func (d *Deleter[T]) Build() (*Query, error) {
 	d.sb = &strings.Builder{}
 	var err error
-	d.model, err = parseModel(new(T))
+	d.model, err = d.r.parseModel(new(T))
 	if err != nil {
 		return nil, err
 	}
@@ -43,12 +44,7 @@ func (d *Deleter[T]) Build() (*Query, error) {
 
 	if len(d.where) > 0 {
 		sb.WriteString(" WHERE ")
-		p := d.where[0]
-		for i := 1; i < len(d.where); i++ {
-			p = p.And(d.where[i])
-		}
-
-		if err := d.buildExpression(p); err != nil {
+		if err = d.buildPredicates(d.where); err != nil {
 			return nil, err
 		}
 

@@ -6,15 +6,24 @@ import (
 )
 
 type Selector[T any] struct {
-	table string
-	where []Predicate
+	table  string
+	where  []Predicate
+	having []Predicate
 	builder
 }
 
+func NewSelector[T any](db *DB) *Selector[T] {
+	return &Selector[T]{
+		builder: builder{
+			sb: &strings.Builder{},
+			db: db,
+		},
+	}
+}
+
 func (s *Selector[T]) Build() (*Query, error) {
-	s.sb = &strings.Builder{}
 	var err error
-	s.model, err = parseModel(new(T))
+	s.model, err = s.db.r.parseModel(new(T))
 	if err != nil {
 		return nil, err
 	}
@@ -41,14 +50,17 @@ func (s *Selector[T]) Build() (*Query, error) {
 
 	if len(s.where) > 0 {
 		sb.WriteString(" WHERE ")
-		p := s.where[0]
-		for i := 1; i < len(s.where); i++ {
-			p = p.And(s.where[i])
-		}
-
-		if err := s.buildExpression(p); err != nil {
+		if err = s.buildPredicates(s.where); err != nil {
 			return nil, err
 		}
+		//p := s.where[0]
+		//for i := 1; i < len(s.where); i++ {
+		//	p = p.And(s.where[i])
+		//}
+		//
+		//if err = s.buildExpression(p); err != nil {
+		//	return nil, err
+		//}
 
 	}
 
