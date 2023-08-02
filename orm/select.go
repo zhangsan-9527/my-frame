@@ -12,6 +12,9 @@ type Selector[T any] struct {
 	builder
 }
 
+// 不允许在方法中引入泛型
+//func (db *DB)NewSelector[T any]() *Selector[T]{}
+
 func NewSelector[T any](db *DB) *Selector[T] {
 	return &Selector[T]{
 		builder: builder{
