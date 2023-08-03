@@ -17,7 +17,7 @@ type Deleter[T any] struct {
 func (d *Deleter[T]) Build() (*Query, error) {
 	d.sb = &strings.Builder{}
 	var err error
-	d.model, err = d.r.parseModel(new(T))
+	d.model, err = d.r.Register(new(T))
 	if err != nil {
 		return nil, err
 	}

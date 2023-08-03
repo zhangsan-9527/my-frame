@@ -8,7 +8,7 @@ import (
 type builder struct {
 	sb    *strings.Builder
 	args  []any
-	model *model
+	model *Model
 	db    *DB
 }
 
@@ -96,7 +96,7 @@ func (b *builder) buildExpression(expr Expression) error {
 		fd, ok := b.model.fields[exp.name]
 		// 字段不对, 或者说列不对
 		if !ok {
-			return errs.NewErrUnkonwField(exp.name)
+			return errs.NewErrUnknownField(exp.name)
 		}
 		b.sb.WriteByte('`')
 		b.sb.WriteString(fd.colName)

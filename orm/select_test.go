@@ -84,7 +84,7 @@ func TestSelector_Build(t *testing.T) {
 		{
 			name:    "invalid column",
 			bulider: NewSelector[TestModel](db).Where(C("Age").Eq(18).Or(C("XXXX").Eq(30))),
-			wantErr: errs.NewErrUnkonwField("XXXX"),
+			wantErr: errs.NewErrUnknownField("XXXX"),
 		},
 	}
 

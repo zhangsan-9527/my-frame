@@ -12,24 +12,32 @@ const (
 	tagKeyColumn = "column"
 )
 
-type model struct {
-	tableName string
-	// 表名
-	fields map[string]*field
+type Registry interface {
+	Get(val any) (*Model, error)
+	Registry(val any, opts ...ModelOpt) (*Model, error)
 }
 
-//var models = map[reflect.Type]*model{}
+type Model struct {
+	tableName string
+	// 表名
+	fields map[string]*Field
+}
+
+// ModelOpt option模式(变种)
+type ModelOpt func(m *Model) error
+
+//var models = map[reflect.Type]*Model{}
 
 // defultRegistry 全局默认的registry
 //var defultRegistry = &registry{
-//	models: map[reflect.Type]*model{},
+//	models: map[reflect.Type]*Model{},
 //}
 
 // registry 代表的是元数据的注册中心
 type registry struct {
 	// 读写锁
 	//lock   sync.RWMutex
-	//models map[reflect.Type]*model
+	//models map[reflect.Type]*Model
 
 	models sync.Map // 性能好一点但是可能会有覆盖
 }
@@ -38,24 +46,23 @@ func newRegistry() *registry {
 	return &registry{}
 }
 
-func (r *registry) get(val any) (*model, error) {
+func (r *registry) Get(val any) (*Model, error) {
 	typ := reflect.TypeOf(val)
 	m, ok := r.models.Load(typ)
 	if ok {
-		return m.(*model), nil
+		return m.(*Model), nil
 	}
-	m, err := r.parseModel(val) // 会有重复解析的问题  但是i很轻微  刚启动的时候 可能会重复解析model 一次两次三次
+	m, err := r.Register(val) // 会有重复解析的问题  但是i很轻微  刚启动的时候 可能会重复解析model 一次两次三次
 	if err != nil {
 		return nil, err
 	}
-	r.models.Store(typ, m)
-	return m.(*model), nil
+	//r.models.Store(typ, m)
+	return m.(*Model), nil
 
 }
 
 // double check 写法
-//
-//	func (r *registry) get1(val any) (*model, error) {
+//	func (r *registry) get1(val any) (*Model, error) {
 //		typ := reflect.TypeOf(val)
 //
 //		r.lock.RLock()
@@ -72,7 +79,7 @@ func (r *registry) get(val any) (*model, error) {
 //			return m, nil
 //		}
 //
-//		m, err := r.parseModel(val)
+//		m, err := r.Register(val)
 //		if err != nil {
 //			return nil, err
 //		}
@@ -80,22 +87,23 @@ func (r *registry) get(val any) (*model, error) {
 //		return m, nil
 //	}
 
-type field struct {
+type Field struct {
 	// 列名
 	colName string
 }
 
-func (r *registry) parseModel(entity any) (*model, error) {
+// Register 限制只能用一级指针
+func (r *registry) Register(entity any, opts ...ModelOpt) (*Model, error) {
 	typ := reflect.TypeOf(entity)
-	// 限制只能用一级指针
+
 	if typ.Kind() != reflect.Ptr || typ.Elem().Kind() != reflect.Struct {
 		return nil, errs.ErrPointerOnly
 	}
-	typ = typ.Elem()
-	numField := typ.NumField()
-	fieldMap := make(map[string]*field, numField)
+	eleTyp := typ.Elem()
+	numField := eleTyp.NumField()
+	fieldMap := make(map[string]*Field, numField)
 	for i := 0; i < numField; i++ {
-		fd := typ.Field(i)
+		fd := eleTyp.Field(i)
 		pair, err := r.parseTab(fd.Tag)
 		if err != nil {
 			return nil, err
@@ -106,7 +114,7 @@ func (r *registry) parseModel(entity any) (*model, error) {
 			colName = underscoreName(fd.Name)
 
 		}
-		fieldMap[fd.Name] = &field{
+		fieldMap[fd.Name] = &Field{
 			colName: colName,
 		}
 	}
@@ -118,13 +126,43 @@ func (r *registry) parseModel(entity any) (*model, error) {
 	}
 
 	if tableName == "" {
-		tableName = underscoreName(typ.Name())
+		tableName = underscoreName(eleTyp.Name())
 	}
 
-	return &model{
+	res := &Model{
 		tableName: tableName,
 		fields:    fieldMap,
-	}, nil
+	}
+
+	for _, opt := range opts {
+		err := opt(res)
+		if err != nil {
+			return nil, err
+		}
+	}
+	r.models.Store(typ, res)
+	return res, nil
+}
+
+func ModelWithTableName(tableName string) ModelOpt {
+	return func(m *Model) error {
+		m.tableName = tableName
+		//if tableName == "" {
+		//	return err
+		//}
+		return nil
+	}
+}
+
+func ModelWithColumnName(field, colName string) ModelOpt {
+	return func(m *Model) error {
+		fd, ok := m.fields[field]
+		if !ok {
+			return errs.NewErrUnknownField(field)
+		}
+		fd.colName = colName
+		return nil
+	}
 }
 
 type User struct {
@@ -183,7 +221,7 @@ func underscoreName(tableName string) string {
 		其实在Web 框架里面我们已经用过第一种思路了:
 			要求服务器在启动之前一定要先注册好路由。
 
-			我们可以考虑要求用户一定要提前注册好 model。
+			我们可以考虑要求用户一定要提前注册好 Model。
 
 			性能苛刻的场景下，第一种做法是比较好的选择，相当于牺牲了开发体验来换取高性能。
 

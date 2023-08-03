@@ -21,7 +21,7 @@ func NewErrUnsupportedExpression(expr any) error {
 	return fmt.Errorf("orm: 不支持的表达形式 %v", expr)
 }
 
-func NewErrUnkonwField(name any) error {
+func NewErrUnknownField(name any) error {
 	return fmt.Errorf("orm: 未知字段 %v", name)
 }
 

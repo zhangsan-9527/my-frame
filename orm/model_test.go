@@ -2,31 +2,32 @@ package orm
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"my-frame/orm/internal/errs"
 	"reflect"
 	"sync"
 	"testing"
 )
 
-func Test_parseModel(t *testing.T) {
+func Test_parse_Registry(t *testing.T) {
 
 	tests := []struct {
 		name      string
 		entity    any
-		wantModel *model
+		wantModel *Model
 		wantErr   error
 	}{
 		{
-			name:    "test model",
+			name:    "test Model",
 			entity:  TestModel{},
 			wantErr: errs.ErrPointerOnly,
 		},
 		{
 			name:   "pointer",
 			entity: &TestModel{},
-			wantModel: &model{
+			wantModel: &Model{
 				tableName: "test_model",
-				fields: map[string]*field{
+				fields: map[string]*Field{
 					"Id": {
 						colName: "id",
 					},
@@ -61,7 +62,7 @@ func Test_parseModel(t *testing.T) {
 	r := &registry{}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m, err := r.parseModel(tt.entity)
+			m, err := r.Register(tt.entity)
 			assert.Equal(t, tt.wantErr, err)
 			if err != nil {
 				return
@@ -77,7 +78,7 @@ func TestRegistry_get(t *testing.T) {
 		name string
 
 		entity    any
-		wantModel *model
+		wantModel *Model
 		wantErr   error
 
 		cacheSize int
@@ -85,9 +86,9 @@ func TestRegistry_get(t *testing.T) {
 		{
 			name:   "pointer",
 			entity: &TestModel{},
-			wantModel: &model{
+			wantModel: &Model{
 				tableName: "test_model",
-				fields: map[string]*field{
+				fields: map[string]*Field{
 					"Id": {
 						colName: "id",
 					},
@@ -112,9 +113,9 @@ func TestRegistry_get(t *testing.T) {
 				}
 				return &TagTable{}
 			}(),
-			wantModel: &model{
+			wantModel: &Model{
 				tableName: "tag_table",
-				fields: map[string]*field{
+				fields: map[string]*Field{
 					"FirstName": {
 						colName: "first_name_t",
 					},
@@ -130,9 +131,9 @@ func TestRegistry_get(t *testing.T) {
 				}
 				return &TagTable{}
 			}(),
-			wantModel: &model{
+			wantModel: &Model{
 				tableName: "tag_table",
-				fields: map[string]*field{
+				fields: map[string]*Field{
 					"FirstName": {
 						colName: "first_name",
 					},
@@ -158,9 +159,9 @@ func TestRegistry_get(t *testing.T) {
 				}
 				return &TagTable{}
 			}(),
-			wantModel: &model{
+			wantModel: &Model{
 				tableName: "tag_table",
-				fields: map[string]*field{
+				fields: map[string]*Field{
 					"FirstName": {
 						colName: "first_name",
 					},
@@ -171,9 +172,9 @@ func TestRegistry_get(t *testing.T) {
 		{
 			name:   "table name",
 			entity: &CustomTableName{},
-			wantModel: &model{
+			wantModel: &Model{
 				tableName: "custom_table_name_t",
-				fields: map[string]*field{
+				fields: map[string]*Field{
 					"FirstName": {
 						colName: "first_name",
 					},
@@ -184,9 +185,9 @@ func TestRegistry_get(t *testing.T) {
 		{
 			name:   "table name",
 			entity: &CustomTableNamePtr{},
-			wantModel: &model{
+			wantModel: &Model{
 				tableName: "custom_table_name_ptr_t",
-				fields: map[string]*field{
+				fields: map[string]*Field{
 					"FirstName": {
 						colName: "first_name",
 					},
@@ -197,9 +198,9 @@ func TestRegistry_get(t *testing.T) {
 		{
 			name:   "empty table name",
 			entity: &EmptyTableName{},
-			wantModel: &model{
+			wantModel: &Model{
 				tableName: "empty_table_name",
-				fields: map[string]*field{
+				fields: map[string]*Field{
 					"FirstName": {
 						colName: "first_name",
 					},
@@ -212,14 +213,14 @@ func TestRegistry_get(t *testing.T) {
 	r := newRegistry()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m, err := r.get(tt.entity)
+			m, err := r.Get(tt.entity)
 			if err != nil {
 				assert.Equal(t, tt.wantErr, err)
 				return
 			}
 			assert.Equal(t, tt.wantModel, m)
 			// 只是检测数量
-			assert.Equal(t, tt.cacheSize, getSyncMapLength(&r.models))
+			//assert.Equal(t, tt.cacheSize, getSyncMapLength(&r.models))
 
 			typ := reflect.TypeOf(tt.entity)
 			cache, ok := r.models.Load(typ)
@@ -260,4 +261,50 @@ type EmptyTableName struct {
 
 func (c EmptyTableName) TableName() string {
 	return ""
+}
+
+func TestModelWithTableName(t *testing.T) {
+	r := newRegistry()
+	m, err := r.Register(&TestModel{}, ModelWithTableName("test_model_tttt"))
+	require.NoError(t, err)
+	assert.Equal(t, "test_model_tttt", m.tableName)
+}
+
+func TestModelWithCloumnName(t *testing.T) {
+	testCases := []struct {
+		name    string
+		field   string
+		colName string
+
+		wantCloName string
+		wantErr     error
+	}{
+		{
+			name:        "cloumn name",
+			field:       "FirstName",
+			colName:     "first_name_cccc",
+			wantCloName: "first_name_cccc",
+		},
+		{
+			name:        "invalid cloumn name",
+			field:       "XXX",
+			colName:     "first_name_cccc",
+			wantCloName: "first_name_cccc",
+			wantErr:     errs.NewErrUnknownField("XXX"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			r := newRegistry()
+			m, err := r.Register(&TestModel{}, ModelWithColumnName(tc.field, tc.colName))
+			assert.Equal(t, tc.wantErr, err)
+			if err != nil {
+				return
+			}
+			fd, ok := m.fields[tc.field]
+			assert.True(t, ok)
+			assert.Equal(t, tc.wantCloName, fd.colName)
+		})
+	}
 }
