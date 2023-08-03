@@ -3,8 +3,13 @@ package orm
 import (
 	"my-frame/orm/internal/errs"
 	"reflect"
+	"strings"
 	"sync"
 	"unicode"
+)
+
+const (
+	tagKeyColumn = "column"
 )
 
 type model struct {
@@ -74,6 +79,7 @@ func (r *registry) get(val any) (*model, error) {
 //		r.models[typ] = m
 //		return m, nil
 //	}
+
 type field struct {
 	// 列名
 	colName string
@@ -90,14 +96,59 @@ func (r *registry) parseModel(entity any) (*model, error) {
 	fieldMap := make(map[string]*field, numField)
 	for i := 0; i < numField; i++ {
 		fd := typ.Field(i)
+		pair, err := r.parseTab(fd.Tag)
+		if err != nil {
+			return nil, err
+		}
+		colName := pair[tagKeyColumn]
+		if colName == "" {
+			// 用户没有设置
+			colName = underscoreName(fd.Name)
+
+		}
 		fieldMap[fd.Name] = &field{
-			colName: underscoreName(fd.Name),
+			colName: colName,
 		}
 	}
+
+	// 自定义表名
+	var tableName string
+	if tbl, ok := entity.(TableNane); ok {
+		tableName = tbl.TableName()
+	}
+
+	if tableName == "" {
+		tableName = underscoreName(typ.Name())
+	}
+
 	return &model{
-		tableName: underscoreName(typ.Name()),
+		tableName: tableName,
 		fields:    fieldMap,
 	}, nil
+}
+
+type User struct {
+	ID uint64 `orm:"column=id,xx=bb"`
+}
+
+func (r *registry) parseTab(tag reflect.StructTag) (map[string]string, error) {
+	ormTag, ok := tag.Lookup("orm")
+	if !ok {
+		return map[string]string{}, nil
+	}
+	pairs := strings.Split(ormTag, ",")
+	res := make(map[string]string, len(pairs))
+	for _, pair := range pairs {
+		segs := strings.Split(pair, "=")
+		if len(segs) != 2 {
+			return nil, errs.NewErrInvalidTagContent(pair)
+		}
+		key := segs[0]
+		val := segs[1]
+		res[key] = val
+	}
+	return res, nil
+
 }
 
 // underscoreName 驼峰转字符串命名

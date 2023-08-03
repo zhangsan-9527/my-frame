@@ -31,3 +31,7 @@ type Query struct {
 	SQL  string
 	Args []any
 }
+
+type TableNane interface {
+	TableName() string
+}

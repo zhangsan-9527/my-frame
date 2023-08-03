@@ -24,3 +24,7 @@ func NewErrUnsupportedExpression(expr any) error {
 func NewErrUnkonwField(name any) error {
 	return fmt.Errorf("orm: 未知字段 %v", name)
 }
+
+func NewErrInvalidTagContent(pair string) error {
+	return fmt.Errorf("orm: 非法标签 %v", pair)
+}
