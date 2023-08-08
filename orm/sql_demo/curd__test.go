@@ -11,7 +11,7 @@ import (
 )
 
 func TestDB(t *testing.T) {
-	db, err := sql.Open("sqlite3", "file:test.db?cache=shared&mode=memory")
+	db, err := sql.Open("sqlite3", "C:\\Users\\81933\\test.db?cache=shared&mode=memory")
 	require.NoError(t, err)
 	defer db.Close()
 	// 这里 你就可以用 DB 了
@@ -19,21 +19,21 @@ func TestDB(t *testing.T) {
 
 	//db.Exec() 与 db.ExecContext() 区别有无 ctx  用于控制超时等
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	// 除了 SELECT 语句, 都是使用 ExecContext
-	_, err = db.ExecContext(ctx, `
-CREATE TABLE IF NOT EXISTS test_model(
-    id INTEGER PRIMARY KEY,
-    first_name TEXT NOT NULL,
-    age INTEGER,
-    last_name TEXT NOT NULL
-)
-`)
+	//// 除了 SELECT 语句, 都是使用 ExecContext
+	//_, err = db.ExecContext(ctx, `
+	//CREATE TABLE IF NOT EXISTS test_model(
+	//   id INTEGER PRIMARY KEY,
+	//   first_name TEXT NOT NULL,
+	//   age INTEGER,
+	//   last_name TEXT NOT NULL
+	//)
+	//`)
 
 	// 完成了建表
 	require.NoError(t, err)
 
 	// 使用 ? 作为查询的参数的占位符 防止依赖注入
-	res, err := db.ExecContext(ctx, "INSERT INTO test_model (`id`, `first_name`, `age`, `last_name` ) VALUES (?,?,?,?), 1, 'zs', 18, '9527'")
+	res, err := db.ExecContext(ctx, "INSERT INTO test_model (`id`, `first_name`, `age`, `last_name` ) VALUES (?,?,?,?)", 1, "zs", 18, "9527")
 
 	require.NoError(t, err)
 	affected, err := res.RowsAffected() // 受影响影响行数
@@ -61,10 +61,12 @@ CREATE TABLE IF NOT EXISTS test_model(
 
 	// 需要调用Next() 批量查询
 	rows, err := db.QueryContext(ctx, "SELECT `id`, `first_name`, `age`, `last_name` FROM `test_model` WHERE `id` = ?", 2)
+
 	for rows.Next() {
 		tm = TestModel{}
 		// 这里不会返回sql.ErrNoRows
 		err = rows.Scan(&tm.Id, &tm.FirstName, &tm.Age, &tm.LastName)
+		log.Println(tm)
 		require.NoError(t, err)
 	}
 
