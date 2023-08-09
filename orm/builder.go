@@ -93,7 +93,7 @@ func (b *builder) buildExpression(expr Expression) error {
 
 	case Column:
 
-		fd, ok := b.model.fields[exp.name]
+		fd, ok := b.model.fieldMap[exp.name]
 		// 字段不对, 或者说列不对
 		if !ok {
 			return errs.NewErrUnknownField(exp.name)
