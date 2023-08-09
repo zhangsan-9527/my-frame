@@ -94,8 +94,20 @@ func (s *Selector[T]) Where(ps ...Predicate) *Selector[T] {
 }
 
 func (s *Selector[T]) Get(ctx context.Context) (*T, error) {
-	//TODO implement me
-	panic("implement me")
+
+	q, err := s.Build()
+	if err != nil {
+		return nil, err
+	}
+
+	db := s.db.db
+	// 在这里, 就是要发起查询, 并且处理结果集
+	_, err = db.QueryContext(ctx, q.SQL, q.Args...)
+	// 在这里, 继续处理结果集
+	if err != nil {
+		return nil, err
+	}
+	return nil, nil
 }
 
 func (s *Selector[T]) GetMulti(ctx context.Context) ([]*T, error) {

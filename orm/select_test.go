@@ -2,6 +2,7 @@ package orm
 
 import (
 	"database/sql"
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"my-frame/orm/internal/errs"
@@ -9,8 +10,7 @@ import (
 )
 
 func TestSelector_Build(t *testing.T) {
-	db, err := NewDB()
-	require.NoError(t, err)
+	db := memoryDB(t)
 	testCass := []struct {
 		name      string
 		bulider   QueryBuilder
@@ -106,4 +106,13 @@ type TestModel struct {
 	FirstName string
 	Age       int8
 	LastName  *sql.NullString
+}
+
+func memoryDB(t *testing.T) *DB {
+	db, err := sql.Open("sqlite3", "C:\\Users\\81933\\test.db?cache=shared&mode=memory")
+	require.NoError(t, err)
+	return &DB{
+		r:  newRegistry(),
+		db: db,
+	}
 }
