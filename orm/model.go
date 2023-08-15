@@ -19,13 +19,13 @@ type Registry interface {
 
 type Model struct {
 	// 表名
-	tableName string
+	TableName string
 
 	// 字段名到字段的映射
-	fieldMap map[string]*Field
+	FieldMap map[string]*Field
 
 	// 列名到字段定义的映射
-	columnMap map[string]*Field
+	ColumnMap map[string]*Field
 }
 
 // ModelOpt option模式(变种)
@@ -61,17 +61,17 @@ func (r *registry) Get(val any) (*Model, error) {
 	if err != nil {
 		return nil, err
 	}
-	//r.models.Store(typ, m)
+	//r.models.Store(Typ, m)
 	return m.(*Model), nil
 
 }
 
 // double check 写法
 //	func (r *registry) get1(val any) (*Model, error) {
-//		typ := reflect.TypeOf(val)
+//		Typ := reflect.TypeOf(val)
 //
 //		r.lock.RLock()
-//		m, ok := r.models[typ]
+//		m, ok := r.models[Typ]
 //		r.lock.RUnlock()
 //		if ok {
 //			return m, nil
@@ -79,7 +79,7 @@ func (r *registry) Get(val any) (*Model, error) {
 //
 //		r.lock.Lock()
 //		defer r.lock.Unlock()
-//		m, ok = r.models[typ]
+//		m, ok = r.models[Typ]
 //		if ok {
 //			return m, nil
 //		}
@@ -88,19 +88,22 @@ func (r *registry) Get(val any) (*Model, error) {
 //		if err != nil {
 //			return nil, err
 //		}
-//		r.models[typ] = m
+//		r.models[Typ] = m
 //		return m, nil
 //	}
 
 type Field struct {
 	// 字段名
-	goName string
+	GoName string
 
 	// 列名
-	colName string
+	ColName string
 
 	// 代表的是字段的类型
-	typ reflect.Type
+	Typ reflect.Type
+
+	// 字段相对于结构体本身的偏移量
+	Offset uintptr
 }
 
 // Register 限制只能用一级指针
@@ -128,11 +131,12 @@ func (r *registry) Register(entity any, opts ...ModelOpt) (*Model, error) {
 		}
 		fdMeta := &Field{
 
-			goName: fd.Name,
+			GoName: fd.Name,
 
-			colName: colName,
+			ColName: colName,
 			// 字段类型
-			typ: fd.Type,
+			Typ:    fd.Type,
+			Offset: fd.Offset,
 		}
 
 		fieldMap[fd.Name] = fdMeta
@@ -150,9 +154,9 @@ func (r *registry) Register(entity any, opts ...ModelOpt) (*Model, error) {
 	}
 
 	res := &Model{
-		tableName: tableName,
-		fieldMap:  fieldMap,
-		columnMap: columnMap,
+		TableName: tableName,
+		FieldMap:  fieldMap,
+		ColumnMap: columnMap,
 	}
 
 	for _, opt := range opts {
@@ -167,8 +171,8 @@ func (r *registry) Register(entity any, opts ...ModelOpt) (*Model, error) {
 
 func ModelWithTableName(tableName string) ModelOpt {
 	return func(m *Model) error {
-		m.tableName = tableName
-		//if tableName == "" {
+		m.TableName = tableName
+		//if TableName == "" {
 		//	return err
 		//}
 		return nil
@@ -177,11 +181,11 @@ func ModelWithTableName(tableName string) ModelOpt {
 
 func ModelWithColumnName(field, colName string) ModelOpt {
 	return func(m *Model) error {
-		fd, ok := m.fieldMap[field]
+		fd, ok := m.FieldMap[field]
 		if !ok {
 			return errs.NewErrUnknownField(field)
 		}
-		fd.colName = colName
+		fd.ColName = colName
 		return nil
 	}
 }

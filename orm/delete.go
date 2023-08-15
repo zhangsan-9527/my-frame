@@ -26,7 +26,7 @@ func (d *Deleter[T]) Build() (*Query, error) {
 	// 我怎么把表名拿到
 	if d.table == "" {
 		sb.WriteByte('`')
-		sb.WriteString(d.model.tableName)
+		sb.WriteString(d.model.TableName)
 		sb.WriteByte('`')
 	} else {
 		//segs := strings.Split(s.table, ".")
