@@ -32,10 +32,6 @@ type Query struct {
 	Args []any
 }
 
-type TableNane interface {
-	TableName() string
-}
-
 /*
 	面试要点(一)
 		这种面试一般面的都是 ORM 实现原理了:

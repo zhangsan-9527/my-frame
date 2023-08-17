@@ -1,6 +1,9 @@
 package valuer
 
-import "database/sql"
+import (
+	"database/sql"
+	"my-frame/orm/model"
+)
 
 // Value 这样设计主要适用于INSERT
 type Value interface {
@@ -8,7 +11,7 @@ type Value interface {
 }
 
 // Creator 函数式工厂接口
-type Creator func(entity any) Value
+type Creator func(model *model.Model, entity any) Value
 
 //type ValuerV1 interface {
 //	SetColumns(entity any, rows sql.Rows) error

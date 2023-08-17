@@ -2,16 +2,25 @@ package valuer
 
 import (
 	"database/sql"
-	"my-frame/orm"
 	"my-frame/orm/internal/errs"
+	"my-frame/orm/model"
 	"reflect"
 )
 
 type reflectValue struct {
-	model *orm.Model
+	model *model.Model
 
 	// 对应于 T 的指针
 	val any
+}
+
+var _ Creator = NewReflectValue
+
+func NewReflectValue(model *model.Model, val any) Value {
+	return reflectValue{
+		model: model,
+		val:   val,
+	}
 }
 
 func (r reflectValue) SetColumns(rows *sql.Rows) error {

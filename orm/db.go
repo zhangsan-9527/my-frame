@@ -1,12 +1,15 @@
 package orm
 
-import "database/sql"
+import (
+	"database/sql"
+	"my-frame/orm/model"
+)
 
 type DBOption func(db *DB)
 
 // DB 是一个 sql.DB 的装饰器
 type DB struct {
-	r  *registry
+	r  *model.registry
 	db *sql.DB
 }
 
@@ -26,7 +29,7 @@ func Open(driver string, dataSourceName string, opts ...DBOption) (*DB, error) {
 //	OpenDB 常用于测试，以及集成别的数据库中间件。我们会使用 sqlmock 来做单测试
 func OpenDB(db *sql.DB, opts ...DBOption) (*DB, error) {
 	res := &DB{
-		r:  newRegistry(),
+		r:  model.NewRegistry(),
 		db: db,
 	}
 	for _, opt := range opts {

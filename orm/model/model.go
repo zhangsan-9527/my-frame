@@ -1,4 +1,4 @@
-package orm
+package model
 
 import (
 	"my-frame/orm/internal/errs"
@@ -47,7 +47,7 @@ type registry struct {
 	models sync.Map // 性能好一点但是可能会有覆盖
 }
 
-func newRegistry() *registry {
+func NewRegistry() *registry {
 	return &registry{}
 }
 
@@ -228,6 +228,10 @@ func underscoreName(tableName string) string {
 		}
 	}
 	return string(buf)
+}
+
+type TableNane interface {
+	TableName() string
 }
 
 /*

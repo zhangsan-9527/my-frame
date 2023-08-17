@@ -2,13 +2,14 @@ package orm
 
 import (
 	"my-frame/orm/internal/errs"
+	model "my-frame/orm/model"
 	"strings"
 )
 
 type builder struct {
 	sb    *strings.Builder
 	args  []any
-	model *Model
+	model *model.Model
 	db    *DB
 }
 

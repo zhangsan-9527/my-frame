@@ -1,4 +1,4 @@
-package orm
+package model
 
 import (
 	"database/sql"
@@ -251,7 +251,7 @@ func TestRegistry_get(t *testing.T) {
 		},
 	}
 
-	r := newRegistry()
+	r := NewRegistry()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m, err := r.Get(tt.entity)
@@ -314,7 +314,7 @@ func (c EmptyTableName) TableName() string {
 }
 
 func TestModelWithTableName(t *testing.T) {
-	r := newRegistry()
+	r := NewRegistry()
 	m, err := r.Register(&TestModel{}, ModelWithTableName("test_model_tttt"))
 	require.NoError(t, err)
 	assert.Equal(t, "test_model_tttt", m.TableName)
@@ -346,7 +346,7 @@ func TestModelWithCloumnName(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			r := newRegistry()
+			r := NewRegistry()
 			m, err := r.Register(&TestModel{}, ModelWithColumnName(tc.field, tc.colName))
 			assert.Equal(t, tc.wantErr, err)
 			if err != nil {
@@ -357,4 +357,11 @@ func TestModelWithCloumnName(t *testing.T) {
 			assert.Equal(t, tc.wantCloName, fd.ColName)
 		})
 	}
+}
+
+type TestModel struct {
+	Id        int64
+	FirstName string
+	Age       int8
+	LastName  *sql.NullString
 }

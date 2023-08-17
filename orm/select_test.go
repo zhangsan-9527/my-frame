@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"my-frame/orm/internal/errs"
+	"my-frame/orm/model"
 	"testing"
 )
 
@@ -247,7 +248,7 @@ func TestSelector_GetV1(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			res, err := tc.s.GetV1(context.Background())
+			res, err := tc.s.Get(context.Background())
 			require.Equal(t, tc.wantErr, err)
 			if err != nil {
 				return
@@ -261,7 +262,7 @@ func memoryDB(t *testing.T) *DB {
 	db, err := sql.Open("sqlite3", "C:\\Users\\81933\\test.db?cache=shared&mode=memory")
 	require.NoError(t, err)
 	return &DB{
-		r:  newRegistry(),
+		r:  model.NewRegistry(),
 		db: db,
 	}
 }
