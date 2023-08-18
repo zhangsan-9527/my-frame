@@ -14,7 +14,7 @@ const (
 
 type Registry interface {
 	Get(val any) (*Model, error)
-	Registry(val any, opts ...ModelOpt) (*Model, error)
+	Register(val any, opts ...ModelOpt) (*Model, error)
 }
 
 type Model struct {
@@ -47,7 +47,7 @@ type registry struct {
 	models sync.Map // 性能好一点但是可能会有覆盖
 }
 
-func NewRegistry() *registry {
+func NewRegistry() Registry {
 	return &registry{}
 }
 

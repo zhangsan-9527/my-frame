@@ -35,21 +35,25 @@ func Test_parse_Registry(t *testing.T) {
 					ColName: "id",
 					GoName:  "Id",
 					Typ:     reflect.TypeOf(int64(0)),
+					Offset:  0,
 				},
 				{
 					ColName: "first_name",
 					GoName:  "FirstName",
 					Typ:     reflect.TypeOf(""),
+					Offset:  8,
 				},
 				{
 					ColName: "last_name",
 					GoName:  "LastName",
 					Typ:     reflect.TypeOf(&sql.NullString{}),
+					Offset:  32,
 				},
 				{
 					ColName: "age",
 					GoName:  "Age",
 					Typ:     reflect.TypeOf(int8(0)),
+					Offset:  24,
 				},
 			},
 		},
@@ -118,16 +122,19 @@ func TestRegistry_get(t *testing.T) {
 					ColName: "first_name",
 					GoName:  "FirstName",
 					Typ:     reflect.TypeOf(""),
+					Offset:  8,
 				},
 				{
 					ColName: "last_name",
 					GoName:  "LastName",
 					Typ:     reflect.TypeOf(&sql.NullString{}),
+					Offset:  32,
 				},
 				{
 					ColName: "age",
 					GoName:  "Age",
 					Typ:     reflect.TypeOf(int8(0)),
+					Offset:  24,
 				},
 			},
 			cacheSize: 1,
@@ -252,6 +259,7 @@ func TestRegistry_get(t *testing.T) {
 	}
 
 	r := NewRegistry()
+	r = r.(*registry)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m, err := r.Get(tt.entity)
@@ -273,7 +281,7 @@ func TestRegistry_get(t *testing.T) {
 			//assert.Equal(t, tt.cacheSize, getSyncMapLength(&r.models))
 
 			typ := reflect.TypeOf(tt.entity)
-			cache, ok := r.models.Load(typ)
+			cache, ok := r.(*registry).models.Load(typ)
 			assert.True(t, ok)
 			assert.Equal(t, tt.wantModel, cache)
 		})

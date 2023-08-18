@@ -2,7 +2,6 @@ package orm
 
 import (
 	"context"
-	"my-frame/orm/internal/valuer"
 	"strings"
 )
 
@@ -177,8 +176,8 @@ func (s *Selector[T]) Get(ctx context.Context) (*T, error) {
 
 	// 接口定义好之后, 就两件事, 一个是用新接口的方法改造上层,
 	tp := new(T)
-	var creator valuer.Creator
-	val := creator(s.model, tp)
+
+	val := s.db.creator(s.model, tp)
 	err = val.SetColumns(rows)
 
 	// 一个就是提供不同的实现
