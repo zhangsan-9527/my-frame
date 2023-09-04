@@ -11,13 +11,13 @@ type Deleter[T any] struct {
 	builder
 	table string
 	where []Predicate
-	r     *registry
+	//r     *model.registry
 }
 
 func (d *Deleter[T]) Build() (*Query, error) {
 	d.sb = &strings.Builder{}
 	var err error
-	d.model, err = d.r.Register(new(T))
+	d.model, err = d.db.r.Register(new(T))
 	if err != nil {
 		return nil, err
 	}
@@ -26,7 +26,7 @@ func (d *Deleter[T]) Build() (*Query, error) {
 	// 我怎么把表名拿到
 	if d.table == "" {
 		sb.WriteByte('`')
-		sb.WriteString(d.model.tableName)
+		sb.WriteString(d.model.TableName)
 		sb.WriteByte('`')
 	} else {
 		//segs := strings.Split(s.table, ".")

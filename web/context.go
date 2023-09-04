@@ -39,7 +39,7 @@ type Context struct {
 	// name部分 middleware 无法运作
 	Resp http.ResponseWriter
 
-	// 这个如要是为了 middleware 读写用的
+	// 这个主要是为了 middleware 读写用的
 	// 响应数据
 	RespData []byte
 	// 响应状态码
