@@ -90,7 +90,3 @@ type Propagator interface {
 		高端一点的就是维护长短两个 token，可以看做是两个过期时间不一样的 Session。每次先检查短过期时间的 token，找不到就去找长过期时间的token，这时会重新生成一个短 token。
 
 */
-
-/*
-代码获取测试
-*/
